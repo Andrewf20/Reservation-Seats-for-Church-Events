@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+
+  <title>نظام حجز مقاعد الكنيسة الأرثوذكسية</title>
+
+  <!-- NO /_sdk scripts here for GitHub Pages -->
+
+  <!-- QRCode library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Your CSS -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Tailwind CDN (optional but kept same) -->
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+</head>
+
+<body class="h-full">
+  <div id="toast" class="toast"></div>
+
+  <!-- Success Modal -->
+  <div id="successModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="success-modal-content">
+        <div class="success-icon">✅</div>
+        <div class="success-title">تم الحجز بنجاح!</div>
+        <div class="success-message">
+          تم تأكيد حجزك بنجاح. يرجى الاحتفاظ بكود التتبع للمراجعة والدخول.
+        </div>
+        <div class="tracking-box">
+          <div class="tracking-label">كود التتبع الخاص بك:</div>
+          <div class="tracking-code" id="successTrackingCode"></div>
+          <button class="copy-btn" id="copyTrackingBtn">📋 نسخ الكود</button>
+        </div>
+        <button class="share-whatsapp-btn" id="shareWhatsAppBtn">
+          <span>💬</span>
+          <span>شارك على واتساب</span>
+        </button>
+        <button class="modal-btn btn-primary" id="closeSuccessBtn">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Booking Modal -->
+  <div id="bookingModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">إتمام الحجز</h2>
+      </div>
+      <div class="modal-body">
+        <div class="progress-bar">
+          <div class="progress-step">
+            <div class="step-circle active" id="stepCircle1">1</div>
+            <div class="step-label">المقعد</div>
+          </div>
+          <div class="progress-step">
+            <div class="step-circle" id="stepCircle2">2</div>
+            <div class="step-label">البيانات</div>
+          </div>
+          <div class="progress-step">
+            <div class="step-circle" id="stepCircle3">3</div>
+            <div class="step-label">الدفع</div>
+          </div>
+          <div class="progress-step">
+            <div class="step-circle" id="stepCircle4">4</div>
+            <div class="step-label">التأكيد</div>
+          </div>
+        </div>
+
+        <!-- Step 1 -->
+        <div id="step1" class="step-content active">
+          <div class="seat-preview">
+            <div class="seat-preview-icon">🪑</div>
+            <div class="seat-preview-number" id="previewSeatNumber"></div>
+            <div class="seat-preview-details">
+              <div class="preview-detail"><span>📍</span> <span id="previewZone"></span></div>
+              <div class="preview-detail"><span>💰</span> <span id="previewPrice"></span></div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn btn-secondary" id="cancelStep1">إلغاء</button>
+            <button class="modal-btn btn-primary" id="nextStep1">التالي ←</button>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="step2" class="step-content">
+          <div class="form-row">
+            <div class="input-group">
+              <label class="input-label" for="customerName">الاسم الكامل</label>
+              <input type="text" class="input-field" id="customerName" placeholder="أدخل اسمك الكامل" />
+            </div>
+            <div class="input-group">
+              <label class="input-label" for="customerPhone">رقم الهاتف</label>
+              <input type="tel" class="input-field" id="customerPhone" placeholder="01xxxxxxxxx" />
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="customerEmail">البريد الإلكتروني</label>
+            <input type="email" class="input-field" id="customerEmail" placeholder="example@email.com" />
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="companions">هل لديك مرافقين؟</label>
+            <select class="input-field" id="companions">
+              <option value="0">بدون مرافقين (السعر الأساسي)</option>
+              <option value="1">مرافق واحد (+50 EGP)</option>
+              <option value="2">مرافقان (+100 EGP)</option>
+              <option value="3">ثلاثة مرافقين (+150 EGP)</option>
+            </select>
+          </div>
+          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 12px; margin-top: 20px; text-align: center; border: 2px solid #D4AF37;">
+            <div style="font-size: 14px; color: #92400e; margin-bottom: 8px; font-weight: 600;">السعر الإجمالي:</div>
+            <div style="font-size: 32px; font-weight: 700; color: #5D3A7A;" id="totalPriceDisplay">0 EGP</div>
+          </div>
+          <div class="input-group" style="margin-top: 20px;">
+            <label class="input-label" for="notes">ملاحظات (اختياري)</label>
+            <input type="text" class="input-field" id="notes" placeholder="أي ملاحظات إضافية" />
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn btn-secondary" id="backStep2">→ السابق</button>
+            <button class="modal-btn btn-primary" id="nextStep2">التالي ←</button>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div id="step3" class="step-content">
+          <div class="payment-cards">
+            <div class="payment-card" data-method="phone_cash">
+              <div class="payment-icon">📱</div>
+              <div class="payment-title">Phone Cash</div>
+              <div class="payment-account">01234567890</div>
+              <div class="payment-amount" id="phoneCashAmount">100 EGP</div>
+            </div>
+            <div class="payment-card" data-method="insta_pay">
+              <div class="payment-icon">💳</div>
+              <div class="payment-title">InstaPay</div>
+              <div class="payment-account">@church</div>
+              <div class="payment-amount" id="instaPayAmount">100 EGP</div>
+            </div>
+          </div>
+          <div id="qrCodeContainer" style="display: none;">
+            <div class="qr-container">
+              <div class="qr-label">امسح الكود للدفع</div>
+              <div class="qr-code-wrapper"><div id="qrcode"></div></div>
+              <div class="qr-actions">
+                <button class="qr-btn" id="copyPaymentInfo">
+                  <span>📋</span>
+                  <span>نسخ معلومات الدفع</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div style="background: #fff3cd; padding: 15px; border-radius: 12px; border-right: 4px solid #ffc107; margin-bottom: 20px;">
+            <strong>⚠️ تنبيه:</strong> يرجى إرسال المبلغ وإرفاق إثبات الدفع عبر واتساب بعد إتمام الحجز.
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn btn-secondary" id="backStep3">→ السابق</button>
+            <button class="modal-btn btn-primary" id="nextStep3" disabled>التالي ←</button>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div id="step4" class="step-content">
+          <div class="summary-section">
+            <div class="summary-title">ملخص الحجز</div>
+            <div class="summary-row"><span class="summary-label">رقم المقعد:</span> <span class="summary-value" id="summarySeats"></span></div>
+            <div class="summary-row"><span class="summary-label">المنطقة:</span> <span class="summary-value" id="summaryZone"></span></div>
+            <div class="summary-row"><span class="summary-label">الاسم:</span> <span class="summary-value" id="summaryName"></span></div>
+            <div class="summary-row"><span class="summary-label">الهاتف:</span> <span class="summary-value" id="summaryPhone"></span></div>
+            <div class="summary-row"><span class="summary-label">البريد:</span> <span class="summary-value" id="summaryEmail"></span></div>
+            <div class="summary-row"><span class="summary-label">المرافقين:</span> <span class="summary-value" id="summaryCompanions"></span></div>
+            <div class="summary-row"><span class="summary-label">طريقة الدفع:</span> <span class="summary-value" id="summaryPayment"></span></div>
+            <div class="summary-row"><span class="summary-label">الإجمالي:</span> <span class="summary-value" id="summaryTotal"></span></div>
+          </div>
+          <div class="tracking-box" style="margin-top: 25px;">
+            <div class="tracking-label">كود التتبع الخاص بك:</div>
+            <div class="tracking-code" id="previewTrackingCode"></div>
+            <button class="copy-btn" id="copyPreviewTrackingBtn">📋 نسخ الكود</button>
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn btn-secondary" id="backStep4">→ السابق</button>
+            <button class="modal-btn btn-primary" id="confirmBooking">تأكيد الحجز ✓</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-wrapper h-full">
+    <div id="app"></div>
+
+    <footer class="main-footer" id="mainFooter" style="display: none;">
+      <div class="footer-content">
+        <div class="footer-grid">
+          <div class="footer-section">
+            <h3>الكنيسة الأرثوذكسية</h3>
+            <p>📍 شارع الكنيسة، القاهرة، مصر</p>
+            <p>📞 +20 123 456 7890</p>
+            <p>✉️ info@church.com</p>
+          </div>
+          <div class="footer-section">
+            <h3>روابط سريعة</h3>
+            <a href="#">الحجوزات</a>
+            <a href="#">الأحداث القادمة</a>
+            <a href="#">التواصل معنا</a>
+            <a href="#">من نحن</a>
+          </div>
+          <div class="footer-section">
+            <h3>تابعونا</h3>
+            <div class="social-icons">
+  <div class="social-icons">
+  <!-- YouTube -->
+  <a href="https://youtube.com" target="_blank" class="social-icon" aria-label="YouTube">
+    <i class="fab fa-youtube"></i>
+  </a>
+
+  <!-- Instagram -->
+  <a href="https://instagram.com" target="_blank" class="social-icon" aria-label="Instagram">
+    <i class="fab fa-instagram"></i>
+  </a>
+
+  <!-- Facebook -->
+  <a href="https://facebook.com" target="_blank" class="social-icon" aria-label="Facebook">
+    <i class="fab fa-facebook-f"></i>
+  </a>
+
+  <!-- TikTok -->
+  <a href="https://tiktok.com" target="_blank" class="social-icon" aria-label="TikTok">
+    <i class="fab fa-tiktok"></i>
+  </a>
+</div>
+
+</div>
+
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>© 2024 الكنيسة الأرثوذكسية - جميع الحقوق محفوظة</p>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Your JS -->
+  <script src="app.js"></script>
+</body>
+</html>
